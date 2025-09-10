@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -21,6 +22,16 @@ func envOrDefault(key, d string) string {
 }
 
 func NewGormDBFromEnv() (*gorm.DB, error) {
+	// try to load .env if present — non-fatal if file is missing
+	if err := godotenv.Load(); err != nil {
+		// it's okay if .env doesn't exist; prefer real env vars in CI/prod
+		if !os.IsNotExist(err) {
+			// Print a debug message but continue; godotenv returns an error even when .env missing,
+			// so only log in verbose cases (we keep it simple and log).
+			log.Printf("warning: could not load .env: %v", err)
+		}
+	}
+
 	host := envOrDefault("DB_HOST", "localhost")
 	port := envOrDefault("DB_PORT", "5432")
 	user := envOrDefault("DB_USER", "todo")
